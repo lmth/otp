@@ -64,6 +64,13 @@
 -export_type([timestamp/0]).
 -export_type([time_unit/0]).
 -export_type([deprecated_time_unit/0]).
+-opaque process_info_backtrace_handle() :: {reference(), pid()}.
+-type process_info_backtrace_option() ::
+    {chunk_size,  pos_integer()} |
+    {frame_depth, pos_integer()} |
+    {term_depth,  pos_integer()}.
+-export_type([process_info_backtrace_handle/0,
+              process_info_backtrace_option/0]).
 
 -type ext_binary() :: binary().
 -type timestamp() :: {MegaSecs :: non_neg_integer(),
@@ -157,7 +164,9 @@
 -export([unique_integer/0, unique_integer/1]).
 -export([time_offset/0, time_offset/1, timestamp/0]).
 -export([process_display/2]).
--export([process_flag/3, process_info/1, processes/0, purge_module/1]).
+-export([process_flag/3, process_info/1, process_info_backtrace_start/2,
+         process_info_backtrace_next/1, process_info_backtrace_stop/1,
+         processes/0, purge_module/1]).
 -export([put/2, raise/3, read_timer/1, read_timer/2, ref_to_list/1, register/2]).
 -export([send_after/3, send_after/4, start_timer/3, start_timer/4]).
 -export([registered/0, resume_process/1, round/1, self/0]).
@@ -2354,6 +2363,30 @@ process_flag(_Flag, _Value) ->
       InfoTupleList :: [InfoTuple],
       InfoTuple :: process_info_result_item().
 process_info(_Pid,_ItemSpec) ->
+    erlang:nif_error(undefined).
+
+%% process_info_backtrace_start/2
+-spec process_info_backtrace_start(Pid, Options) ->
+          {ok, Handle, Chunk} | {error, Reason} when
+      Pid     :: pid(),
+      Options :: [process_info_backtrace_option()],
+      Handle  :: process_info_backtrace_handle(),
+      Chunk   :: binary(),
+      Reason  :: badarg | noproc.
+process_info_backtrace_start(_Pid, _Options) ->
+    erlang:nif_error(undefined).
+
+%% process_info_backtrace_next/1
+-spec process_info_backtrace_next(Handle) -> {more, Chunk} | done when
+      Handle :: process_info_backtrace_handle(),
+      Chunk  :: binary().
+process_info_backtrace_next(_Handle) ->
+    erlang:nif_error(undefined).
+
+%% process_info_backtrace_stop/1
+-spec process_info_backtrace_stop(Handle) -> ok when
+      Handle :: process_info_backtrace_handle().
+process_info_backtrace_stop(_Handle) ->
     erlang:nif_error(undefined).
 
 -spec erlang:send(Dest, Msg) -> Msg when

@@ -349,7 +349,7 @@ BOOLEAN_T decode_addrinfo_string(ErlNifEnv*         env,
                                  char**             stringP);
 static ERL_NIF_TERM decode_bool(ErlNifEnv*   env,
                                 ERL_NIF_TERM eBool,
-                                BOOLEAN_T*   bool);
+                                BOOLEAN_T*   bool_val);
 static ERL_NIF_TERM encode_address_infos(ErlNifEnv*       env,
                                          struct addrinfo* addrInfo);
 static ERL_NIF_TERM encode_address_info(ErlNifEnv*       env,
@@ -1932,13 +1932,13 @@ BOOLEAN_T decode_addrinfo_string(ErlNifEnv*         env,
 static
 ERL_NIF_TERM decode_bool(ErlNifEnv*   env,
                          ERL_NIF_TERM eBool,
-                         BOOLEAN_T*   bool)
+                         BOOLEAN_T*   bool_val)
 {
     if (COMPARE(eBool, esock_atom_true) == 0) {
-        *bool = TRUE;
+        *bool_val = TRUE;
         return esock_atom_ok;
     } else if (COMPARE(eBool, esock_atom_false) == 0) {
-        *bool = FALSE;
+        *bool_val = FALSE;
         return esock_atom_ok;
     } else {
         return esock_make_error(env, esock_atom_einval);
