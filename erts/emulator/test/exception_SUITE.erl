@@ -1103,6 +1103,12 @@ error_info(_Config) ->
 
          {process_info, [self(), {a,b,c}]},
          {process_info, [ExternalPid, current_function]},
+         {process_info_backtrace_next, [not_a_handle]},
+         {process_info_backtrace_start, [42, []]},
+         {process_info_backtrace_start, [ExternalPid, []]},
+         {process_info_backtrace_stop, [not_a_handle]},
+
+
 
          {purge_module, [{no,module}]},
 
