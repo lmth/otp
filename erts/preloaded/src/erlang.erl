@@ -64,11 +64,13 @@
 -export_type([timestamp/0]).
 -export_type([time_unit/0]).
 -export_type([deprecated_time_unit/0]).
--opaque process_info_backtrace_handle() :: {reference(), pid()}.
+-export_type([spawn_opt_option/0]).
+-export_type([priority_level/0]).
+-export_type([max_heap_size/0]).
+-export_type([message_queue_data/0]).
+-opaque process_info_backtrace_handle() :: reference().
 -type process_info_backtrace_option() ::
-    {chunk_size,  pos_integer()} |
-    {frame_depth, pos_integer()} |
-    {term_depth,  pos_integer()}.
+    {chunk_size, pos_integer()}.
 -export_type([process_info_backtrace_handle/0,
               process_info_backtrace_option/0]).
 
