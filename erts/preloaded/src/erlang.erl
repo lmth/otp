@@ -8063,7 +8063,7 @@ The returned `Handle` is an opaque magic reference used with
 `Chunk` is the first chunk of the backtrace binary, at most `chunk_size` bytes.
 
 Options:
-- `{chunk_size, pos_integer()}` - Maximum bytes per chunk. Default: 1024.
+- `{chunk_size, pos_integer()}` - Maximum bytes per chunk. Default: 65536.
 
 Failures:
 - `badarg` - If `Pid` is not a process identifier, if `Options` is invalid,
