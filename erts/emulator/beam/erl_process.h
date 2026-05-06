@@ -991,18 +991,24 @@ typedef struct ErtsProcSysTaskQs_ ErtsProcSysTaskQs;
 #  define MAX_HEAP_SIZE_KILL 1
 #  define MAX_HEAP_SIZE_LOG  2
 
+#include "erl_printf_term.h"
+
 /*
  * Lazy stack-dump cursor used by ErtsBacktraceSession.
- * Zero-initialise before first call to erts_stack_dump_step.
+ * Zero-initialise before first call to erts_stack_dump_step; in_term starts
+ * at 0 and term_cursor is uninitialised until in_term becomes 1.
  */
 #define ERTS_STACK_DUMP_PHASE_PC_INFO  0
 #define ERTS_STACK_DUMP_PHASE_STACK    1
 #define ERTS_STACK_DUMP_PHASE_DONE     2
 
 typedef struct {
-    int    phase;
-    Eterm *sp;
-    Uint   yreg;
+    int                 phase;
+    Eterm              *sp;
+    Uint                yreg;
+    ErtsPrintTermCursor term_cursor;
+    int                 in_term;
+    long                term_max_bytes;
 } ErtsStackDumpCursor;
 
 /*
