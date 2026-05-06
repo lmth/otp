@@ -5837,7 +5837,8 @@ build_backtrace_reply(Process *c_p,
     }
 
     erts_factory_trim_and_close(&hfact, &result, 1);
-    *bpp = bp;
+    /* hfact.heap_frags may differ from bp if realloc moved it during trim. */
+    *bpp = hfact.heap_frags;
     return result;
 }
 
