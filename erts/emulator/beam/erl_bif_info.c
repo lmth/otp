@@ -6261,8 +6261,6 @@ backtrace_session_destructor(Binary *mbin)
             if (target->chunked_backtrace == ses) {
                 destroy_backtrace_session_buffers(ses);
                 target->chunked_backtrace = NULL;
-                erts_resume_paused_proc_timer(target);
-                erts_resume_paused_bif_timers(target);
                 erts_resume(target, ERTS_PROC_LOCK_MAIN);
             }
             erts_proc_unlock(target, ERTS_PROC_LOCK_MAIN);
@@ -6452,8 +6450,6 @@ backtrace_next_cb(Process *c_p, void *arg, int *redsp, ErlHeapFragment **bpp)
     if (available == 0) {
         /* All data has been delivered — CAS active, resume timers, resume target. */
         erts_atomic_cmpxchg_nob(&ses->active, 0, 1);
-        erts_resume_paused_proc_timer(c_p);
-        erts_resume_paused_bif_timers(c_p);
         destroy_backtrace_session_buffers(ses);
         c_p->chunked_backtrace = NULL;
         erts_resume(c_p, ERTS_PROC_LOCK_MAIN);
@@ -6482,8 +6478,6 @@ backtrace_stop_cb(Process *c_p, void *arg, int *redsp, ErlHeapFragment **bpp)
 
     if (ses) {
         erts_atomic_cmpxchg_nob(&ses->active, 0, 1);
-        erts_resume_paused_proc_timer(c_p);
-        erts_resume_paused_bif_timers(c_p);
         destroy_backtrace_session_buffers(ses);
         c_p->chunked_backtrace = NULL;
         erts_resume(c_p, ERTS_PROC_LOCK_MAIN);
