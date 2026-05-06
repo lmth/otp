@@ -14282,10 +14282,14 @@ erts_stack_dump_step(fmtfn_t to, void *to_arg, Process *p,
                 }
                 return 1;
             } else {
-                char sbuf[16];
-                erts_snprintf(sbuf, sizeof(sbuf), "y(%d)", cur->yreg);
-                erts_print(to, to_arg, "%-8s ", sbuf);
-                cur->yreg++;
+                if (cur->yreg < 0) {
+                    erts_print(to, to_arg, "\n%p ", cur->sp);
+                } else {
+                    char sbuf[16];
+                    erts_snprintf(sbuf, sizeof(sbuf), "y(%d)", cur->yreg);
+                    erts_print(to, to_arg, "%-8s ", sbuf);
+                    cur->yreg++;
+                }
                 if (is_catch(x)) {
                     erts_print(to, to_arg, "Catch %p (", catch_pc(x));
                     print_function_from_pc(to, to_arg, catch_pc(x));
