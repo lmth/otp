@@ -29,6 +29,11 @@
 #include "erl_map.h"
 #include "erl_binary.h"
 
+/* Older OTP versions may not define ERTS_FALLTHROUGH */
+#ifndef ERTS_FALLTHROUGH
+#  define ERTS_FALLTHROUGH() /* fallthrough */
+#endif
+
 #define PRINT_CHAR(CNT, FN, ARG, C)					\
 do {									\
     int res__ = erts_printf_char((FN), (ARG), (C));			\
@@ -860,12 +865,18 @@ erts_print_term_step(fmtfn_t fn, void *arg,
     const ErlFunEntry *fe;
     const Export *ep;
     Atom *ap;
-    ErtsRecordInstance *instance;
-    ErtsRecordDefinition *defp;
     FloatDef ff;
 
     if (cur->sub == PRINT_TERM_CURSOR_DONE)
         return 0;
+
+    /* erts_printf_* functions (used by STEP_PRINT_* macros) call (*fn)()
+     * directly and cannot handle erts_print sentinel values.  Translate
+     * the only sentinel expected here to a real write callback. */
+    if ((UWord)fn == (UWord)ERTS_PRINT_DSBUF)
+        fn = erts_write_ds;
+    else
+        ASSERT((UWord)fn > (UWord)ERTS_PRINT_FD);
 
     res = 0;
     dcount = LONG_MAX;
@@ -916,9 +927,6 @@ erts_print_term_step(fmtfn_t fn, void *arg,
             goto L_outer_loop;
         case PRT_ASSOC:
             STEP_PRINT_STRING("=>");
-            goto L_outer_loop;
-        case PRT_EQUALS:
-            STEP_PRINT_STRING("=");
             goto L_outer_loop;
         default:
             popped.word = WSTACK_POP(ws);
@@ -993,6 +1001,7 @@ erts_print_term_step(fmtfn_t fn, void *arg,
             goto L_outer_loop;
         }
 
+        wobj = obj;
         switch (tag_val_def(wobj)) {
         case NIL_DEF:
             STEP_PRINT_STRING("[]");
@@ -1104,27 +1113,6 @@ erts_print_term_step(fmtfn_t fn, void *arg,
                 }
             }
             break;
-        case RECORD_DEF:
-            instance = RECORD_INST_P(wobj);
-            n = RECORD_INST_FIELD_COUNT(instance);
-            defp = RECORD_DEF_P(instance);
-            ks = defp->keys;
-            vs = instance->values;
-            STEP_PRINT_CHAR('#');
-            STEP_PRINT_ATOM(defp->module, &dcount);
-            STEP_PRINT_CHAR(':');
-            STEP_PRINT_ATOM(defp->name, &dcount);
-            STEP_PRINT_CHAR('{');
-            WSTACK_PUSH(ws, PRT_CLOSE_TUPLE);
-            if (n > 0) {
-                n--;
-                WSTACK_PUSH5(ws, vs[n], PRT_TERM, PRT_EQUALS, ks[n], PRT_TERM);
-                while (n--) {
-                    WSTACK_PUSH6(ws, PRT_COMMA, vs[n], PRT_TERM, PRT_EQUALS,
-                                 ks[n], PRT_TERM);
-                }
-            }
-            break;
         case TUPLE_DEF:
             nobj = tuple_val(wobj);
             i = arityval(*nobj);
@@ -1138,12 +1126,18 @@ erts_print_term_step(fmtfn_t fn, void *arg,
             GET_DOUBLE(wobj, ff);
             STEP_PRINT_DOUBLE('e', 6, 0, ff.fd);
             break;
+#ifdef BITSTRING_DEF
         case BITSTRING_DEF:
             ERTS_GET_BITSTRING(obj, bytep, offset, size);
             bytep += BYTE_OFFSET(offset);
             bitoffs = BIT_OFFSET(offset);
             bytesize = BYTE_SIZE(size);
             bitsize = TAIL_BITS(size);
+#else
+        case BINARY_DEF:
+            bytesize = binary_size(wobj);
+            ERTS_GET_BINARY_BYTES(wobj, bytep, bitoffs, bitsize);
+#endif
 
             if (bitsize || !bytesize || !is_printable_ascii(bytep, bytesize, bitoffs)) {
                 is_first = 1;
@@ -1227,7 +1221,7 @@ erts_print_term_step(fmtfn_t fn, void *arg,
                 ap = atom_tab(atom_val(fe->module));
 
                 STEP_PRINT_STRING("#Fun<");
-                STEP_PRINT_BUF(erts_atom_get_name(ap), ap->len);
+                STEP_PRINT_BUF(ap->name, ap->len);
                 STEP_PRINT_CHAR('.');
                 STEP_PRINT_SWORD('d', 0, 1, (ErlPfSWord) fe->old_index);
                 STEP_PRINT_CHAR('.');
@@ -1317,9 +1311,16 @@ erts_print_term_step(fmtfn_t fn, void *arg,
                 }
             }
             break;
+#ifdef BIN_REF_DEF
         case BIN_REF_DEF:
             STEP_PRINT_STRING("#BinRef");
             break;
+#endif
+#ifdef FUN_REF_DEF
+        case FUN_REF_DEF:
+            STEP_PRINT_STRING("#FunRef");
+            break;
+#endif
         default:
             STEP_PRINT_STRING("<unknown:");
             STEP_PRINT_POINTER(wobj);
